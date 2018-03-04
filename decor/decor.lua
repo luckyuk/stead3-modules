@@ -118,11 +118,95 @@ function img:clear()
 end
 
 function img:render(v)
-    if v.frames and v.w and v.h then
+ -- atlas N x M anim sprite
+	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme == 'sheet' then
+	local first_frame = v.first_frame or 0
+--  begin_frame - set vis parameter if animation started  on another frame - not first.
+  local anim_step = v.anim_step or 1 -- set this parameter to -1(minus one) if need invert animation
+	local shiftx = v.shiftx or 0
+	local shifty = v.shifty or 0
+	local frames = v.frames or v.framesx * v.framesy
+	local anim_scheme = v.anim_scheme or 'horisontal' -- avalible 'horisontal' or 'vertical' now. In development parameter 'sheet'.  
+  local anim_type = v.anim_type or 'loop' -- anim_types 'once', 'loop',  'ping-pong'
 	local delay = v.delay or 25
 	local w, h = v.sprite:size()
 	local width = math.floor(w / v.w)
-	local height = math.floor(h / v.h)
+	local height = math.floor(h / v.h) --geight?
+	local frame = v.frame_nr or first_frame or 0
+  if v.begin_frame and not v.frame_nr then
+    if v.anim_type ~= 'once' then
+      v.frame_nr = v.begin_frame
+    end
+  end
+  if anim_type  == 'once' and anim_step == -1 then
+    if not v.frame_nr then
+      frame = first_frame + frames
+      if anim_scheme == 'sheet' then
+        frame = frame - 1
+      end
+    end
+  end
+  local yy, xx = 0, 0
+		if anim_scheme == 'horisontal' then
+      yy = math.floor(frame / width)
+      xx = math.floor(frame % width)
+      v.fx = xx * v.w - shiftx
+      v.fy = yy * v.h - shifty
+		elseif anim_scheme == 'vertical' then
+			xx = math.floor(frame / height)
+			yy = math.floor(frame % height)
+			v.fx = xx * v.w - shiftx
+			v.fy = yy * v.h - shifty
+		elseif anim_scheme == 'sheet' then
+      local data = v.data
+      local fram = frame + 1
+			v.fx = data.frames[fram].x
+			v.fy = data.frames[fram].y
+      v.w = data.frames[fram].width
+      v.h = data.frames[fram].height
+      v.movx = data.frames[fram].sourceX
+      v.movy = data.frames[fram].sourceY
+    end
+	if instead.ticks() - (v.__delay or 0) >= delay then
+      if anim_step == 1 then
+        if frame < frames - 1 + first_frame then
+          frame = frame + 1
+        else
+          if anim_type == 'loop' then
+            frame = first_frame;
+          elseif anim_type == 'flip-flop' then
+            frame = frame - 1
+            v.anim_step = -1
+          elseif anim_type == 'once' then
+            --nothing do
+          end;
+        end
+      else
+        if frame > first_frame then
+          frame = frame - 1
+        else
+          if anim_type == 'loop' then
+            frame = first_frame + frames - 1;
+          elseif anim_type == 'flip-flop' then
+            frame = frame + 1
+            v.anim_step = 1
+          elseif anim_type  == 'once' then
+            -- nobody do
+          end;
+        end
+      end
+	    v.frame_nr = frame
+	    v.__delay = instead.ticks()
+	end
+    end
+-- end of atlas N x M anim sprite
+------
+-- atlas N x 1 anim sprite
+  if v.frames and v.w and v.h and not v.anim_scheme then
+	local delay = v.delay or 25
+	local w, h = v.sprite:size()
+	local width = math.floor(w / v.w)
+	local height = math.floor(h / v.h) --geight?
 	local frame = v.frame_nr or 0
 	local yy = math.floor(frame / width)
 	local xx = math.floor(frame % width)
@@ -136,18 +220,19 @@ function img:render(v)
 	    end
 	    v.frame_nr = frame
 	    v.__delay = instead.ticks()
-	end
     end
+  end
+-- end of atlas N x M anim sprite
     if v.background then
-        if v.fx and v.fy and v.w and v.h then
-	    v.sprite:copy(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc, v.y - v.yc)
-	else
-	    v.sprite:copy(sprite.scr(), v.x - v.xc, v.y - v.yc)
-	end
+	v.sprite:copy(sprite.scr(), 0, 0)
 	return
     end
     if v.fx and v.fy and v.w and v.h then
-	v.sprite:draw(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc, v.y - v.yc)
+      if v.anim_scheme == 'sheet' then
+        v.sprite:draw(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc + v.movx, v.y - v.yc + v.movy)
+      else
+        v.sprite:draw(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc, v.y - v.yc)
+      end
     else
 	v.sprite:draw(sprite.scr(), v.x - v.xc, v.y - v.yc)
     end
@@ -156,8 +241,6 @@ end
 function img:new_spr(v, s)
     v.xc = v.xc or 0
     v.yc = v.yc or 0
-    v.x = v.x or 0
-    v.y = v.y or 0
     v.sprite = s
     if not s then
 	return v
@@ -402,7 +485,7 @@ function txt:make_page(v, nr)
 	    break
 	end
 	for _, w in ipairs(l) do
-	    if not w.spr and w.w > 0 then
+	    if not w.spr then
 		w.spr = fnt:text(font, size, w.txt,
 				 w.id and link_color or color, w.style)
 	    end
@@ -413,9 +496,7 @@ function txt:make_page(v, nr)
 	    else
 		w.link = nil
 	    end
-	    if w.spr then
-		    w.spr:copy(v.sprite, w.x, w.y - off)
-	    end
+	    w.spr:copy(v.sprite, w.x, w.y - off)
 	end
     end
     if v.typewriter then
@@ -549,15 +630,9 @@ function txt:new(v)
 		    if height > line.h then
 			line.h = height
 		    end
-
-		    if t == '[pause]' then
-			width = 0
-		    end
-
 		    local witem = { style = st,
 				    action = act, id = id, x = xx, y = y,
 				    w = width, h = height, txt = t }
-
 		    if id then
 			table.insert(link_list, witem)
 		    end
@@ -654,7 +729,7 @@ function txt:make_tw(v, step)
 	    if w.txt:len() + n <= step then
 		n = n + w.txt:len()
 		n = n + 1
-		if n >= step and w.spr then
+		if n >= step then
 		    w.spr:copy(spr, w.x, w.y - v.__offset)
 		end
 	    else
@@ -666,12 +741,7 @@ function txt:make_tw(v, step)
 		step = step + i - nm
 		local txt = w.txt:sub(1, i - 1)
 		local ww, hh = v.fnt:size(txt)
-		if w.spr then
-			if type(decor.beep) == 'function' then
-			    decor.beep(v)
-			end
-			w.spr:copy(0, 0, ww, hh, spr, w.x, w.y - v.__offset)
-		end
+		w.spr:copy(0, 0, ww, hh, spr, w.x, w.y - v.__offset)
 		n = step
 	    end
 	end
@@ -781,18 +851,6 @@ decor = obj {
 --[[
 decor:img{ 'hello', 'img' }
 ]]--
-
-function decor:zap()
-	local l = {}
-	for k, v in pairs(self.objects) do
-		table.insert(l, k)
-	end
-	for _, name in ipairs(l) do
-		local tt = self.objects[name].type
-		self[tt]:delete(self.objects[name])
-		self.objects[name] = nil
-	end
-end
 
 function decor:new(v)
     if type(v) == 'string' then
@@ -1011,9 +1069,6 @@ end
 
 function D(n)
     decor.dirty = true
-    if n == nil then
-	return decor:zap()
-    end
     if type(n) == 'table' then
 	return decor:new(n)
     end

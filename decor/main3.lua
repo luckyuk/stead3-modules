@@ -1,4 +1,5 @@
 require "timer"
+dofile "uma1.lua"
 loadmod "decor"
 --[[
 Создание декоратора:
@@ -44,6 +45,17 @@ delay = число мс -- задержка анимации.
 background - если true, этот спрайт считается фоном и просто копируется (быстро). Для фонов ставьте z побольше.
 
 fx, fy - числа - если рисуем картинку из полотна, можно указать позицию в котором она находится
+
+anim_scheme - текст - может быть 'horisontal', 'vertical' или 'sheet'. Указывает способ, которым размещена последовательность кадров в файле изображения.
+'horisontal' - строчный способ, 'vertical' - столбцовый, 'sheet' - упаковка с вырезанием пустого места.
+first_frame - число - указывает начальный кадр анимации.
+data - переменная - указатель на таблицу, содержащую данные о размещении 'sheet' - кадров анимации
+framesx, framesy - число - количество столбцов и строк в анимации при способе 'vertical' или 'horisontal'
+anim_type - строка - тип анимации. 'loop', 'flip-flop' или 'once'.
+begin_frame - число - кадр, с которого начнётся воспроизведение в первом цикле анимации
+anim_step - число - указывает прямой или обратный порядок воспроизведения. Значения 1 или -1
+
+
 
 Пример:
 	D {"cat", "img", "anim.png", x = -64, y = 48, frames = 3, w = 64, h = 54, delay = 100, click = true }
@@ -140,15 +152,41 @@ end)
 
 declare 'kitten' (function (cat)
     cat.x = cat.x + 2
+    if cat.x > 500 then
+      cat.x = -64
+    end
+end)
+
+declare 'kitten1' (function (digit1)
+    digit1.x = digit1.x + 2
+end)
+
+declare 'kitten2' (function (digit2)
+    digit2.x = digit2.x + 2
+end)
+
+declare 'kitten3' (function (digit3)
+    digit3.x = digit3.x + 2
 end)
 
 function init()
+  local k = {
+    drt = sheetData.frames
+    }
+  print (sheetData)
+  print (sheetData.frames)
+  print (k["drt"][1].x)
 	timer:set(50)
 	for i = 1, 100 do
 		decor:new {"snow"..std.tostr(i), "img", "box:4x4,black", process = flake, x= rnd(800), y = rnd(600), xc = true, yc = true, z = -1 }
 	end
 	decor.bgcol = 'white'
-	D {"cat", "img", "anim.png", process = kitten, x = -64, y = 48, frames = 3, w = 64, h = 54, delay = 100, click = true, z = -1}
+	D {"cat", "img", "anim.png", process = kitten, x = -64, y = 88, frames = 3, w = 64, h = 56, delay = 100, click = true, z = -1}
+	D {"digit1", "img", "led.jpg", process = kitten1, x = -64, y = 48, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'flip-flop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
+	D {"digit2", "img", "led.jpg", process = kitten2, x = -64, y = 148, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'loop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
+	D {"digit4", "img", "led.jpg", x = 264, y = 148, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'flip-flop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
+	D {"digit3", "img", "led.jpg", process = kitten3, x = 64, y = 248, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, framesx = 5, framesy = 2, anim_type = 'once', anim_step = 1, w = 32, h = 63, delay = 500, click = true, z = -1}
+  D {"uma", "img", "uma1.png", x = 164, y = 298, xc = true, yc = true, first_frame = 0, frames = 8, anim_scheme = 'sheet', data = sheetData, anim_type = 'loop', anim_step = 1, w = 227, h = 162, delay = 50, click = true, z = -1}
 	D {"bg", "img", box_alpha, xc = true, yc = true, x = 400, w = 180, y = 300, h = 148, z = 2  }
 	D {"text", "txt", text, xc = true, yc = true, x = 400, w = 160, y = 300, align = 'left', hidden = false, h = 128, typewriter = true, z =1 }
 end
