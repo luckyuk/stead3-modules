@@ -119,7 +119,8 @@ end
 
 function img:render(v)
  -- atlas N x M anim sprite
-	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme == 'sheet' then
+--	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme == 'sheet' then
+	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme then
 	local first_frame = v.first_frame or 0
 --  begin_frame - set vis parameter if animation started  on another frame - not first.
   local anim_step = v.anim_step or 1 -- set this parameter to -1(minus one) if need invert animation
@@ -127,7 +128,7 @@ function img:render(v)
 	local shifty = v.shifty or 0
 	local frames = v.frames or v.framesx * v.framesy
 	local anim_scheme = v.anim_scheme or 'horisontal' -- avalible 'horisontal' or 'vertical' now. In development parameter 'sheet'.  
-  local anim_type = v.anim_type or 'loop' -- anim_types 'once', 'loop',  'ping-pong'
+	local anim_type = v.anim_type or 'loop' -- anim_types 'once', 'loop',  'ping-pong'
 	local delay = v.delay or 25
 	local w, h = v.sprite:size()
 	local width = math.floor(w / v.w)
@@ -230,6 +231,11 @@ function img:render(v)
     if v.fx and v.fy and v.w and v.h then
       if v.anim_scheme == 'sheet' then
         v.sprite:draw(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc + v.movx, v.y - v.yc + v.movy)
+      elseif v.anim_scheme == 'slide' then
+        v.sprite:draw(0, 0, v.w - v.slidex, v.h - v.slidey, sprite.scr(), v.x - v.xc + v.slidex, v.y - v.yc + v.slidey)
+        v.sprite:draw(v.w - v.slidex, v.h - v.slidey, v.slidex, v.slidey, sprite.scr(), v.x - v.xc, v.y - v.yc)
+        v.sprite:draw(v.w - v.slidex, 0, v.slidex, v.h - v.slidey, sprite.scr(), v.x - v.xc, v.y - v.yc + v.slidey)
+        v.sprite:draw(0, v.h - v.slidey, v.w - v.slidex, v.slidey, sprite.scr(), v.x - v.xc + v.slidex, v.y - v.yc)
       else
         v.sprite:draw(v.fx, v.fy, v.w, v.h, sprite.scr(), v.x - v.xc, v.y - v.yc)
       end
