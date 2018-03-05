@@ -169,6 +169,28 @@ declare 'kitten3' (function (digit3)
     digit3.x = digit3.x + 2
 end)
 
+declare 'tiledslid' (function (tiledslide)
+    tiledslide.slidex = tiledslide.slidex + 3
+    tiledslide.slidey = tiledslide.slidey + 2
+    if tiledslide.slidex > tiledslide.w then
+		 tiledslide.slidex = 0
+    end
+    if tiledslide.slidey > tiledslide.h then
+		 tiledslide.slidey = 0
+    end
+end)
+
+declare 'tiledslid1' (function (tiledslide)
+    tiledslide.slidex = tiledslide.slidex - 3
+    tiledslide.slidey = tiledslide.slidey - 2
+    if tiledslide.slidex < 0 then
+		 tiledslide.slidex = tiledslide.w
+    end
+    if tiledslide.slidey < 0 then
+		 tiledslide.slidey = tiledslide.h
+    end
+end)
+
 function init()
   local k = {
     drt = sheetData.frames
@@ -183,10 +205,11 @@ function init()
 	decor.bgcol = 'white'
 	D {"cat", "img", "anim.png", process = kitten, x = -64, y = 88, frames = 3, w = 64, h = 56, delay = 100, click = true, z = -1}
 	D {"digit1", "img", "led.jpg", process = kitten1, x = -64, y = 48, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'flip-flop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
+	D {"tiledslide", "img", "background.png", fx = 0, fy = 0, frames = 1, process = tiledslid1, x = 64, y = 48, anim_scheme = "slide", slidex = 0, slidey = 0, w = 480, h = 320, delay = 500, click = true, z = -1}
 	D {"digit2", "img", "led.jpg", process = kitten2, x = -64, y = 148, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'loop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
 	D {"digit4", "img", "led.jpg", x = 264, y = 148, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, begin_frame = 3, framesx = 5, framesy = 2, anim_scheme = 'horisontal', anim_type = 'flip-flop', anim_step = -1, w = 32, h = 63, delay = 500, click = true, z = -1}
 	D {"digit3", "img", "led.jpg", process = kitten3, x = 64, y = 248, shiftx = 0, shifty = 0, first_frame = 0, frames = 10, framesx = 5, framesy = 2, anim_type = 'once', anim_step = 1, w = 32, h = 63, delay = 500, click = true, z = -1}
-  D {"uma", "img", "uma1.png", x = 164, y = 298, xc = true, yc = true, first_frame = 0, frames = 8, anim_scheme = 'sheet', data = sheetData, anim_type = 'loop', anim_step = 1, w = 227, h = 162, delay = 50, click = true, z = -1}
+	D {"uma", "img", "uma1.png", x = 164, y = 298, xc = true, yc = true, first_frame = 0, frames = 8, anim_scheme = 'sheet', data = sheetData, anim_type = 'loop', anim_step = 1, w = 227, h = 162, delay = 50, click = true, z = -1}
 	D {"bg", "img", box_alpha, xc = true, yc = true, x = 400, w = 180, y = 300, h = 148, z = 2  }
 	D {"text", "txt", text, xc = true, yc = true, x = 400, w = 160, y = 300, align = 'left', hidden = false, h = 128, typewriter = true, z =1 }
 end
