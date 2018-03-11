@@ -120,7 +120,7 @@ end
 function img:render(v)
  -- atlas N x M anim sprite
 --	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme == 'sheet' then
-	if v.framesx and v.framesy and v.w and v.h or v.anim_scheme then
+	if v.anim_scheme then
 	local first_frame = v.first_frame or 0
 --  begin_frame - set vis parameter if animation started  on another frame - not first.
   local anim_step = v.anim_step or 1 -- set this parameter to -1(minus one) if need invert animation
@@ -132,7 +132,7 @@ function img:render(v)
 	local delay = v.delay or 25
 	local w, h = v.sprite:size()
 	local width = math.floor(w / v.w)
-	local height = math.floor(h / v.h) --geight?
+	local height = math.floor(h / v.h)
 	local frame = v.frame_nr or first_frame or 0
   if v.begin_frame and not v.frame_nr then
     if v.anim_type ~= 'once' then
@@ -168,7 +168,26 @@ function img:render(v)
       v.movx = data.frames[fram].sourceX
       v.movy = data.frames[fram].sourceY
     end
+	decor.dirty = true
 	if instead.ticks() - (v.__delay or 0) >= delay then
+	  if anim_scheme == 'slide' then
+        local slide_stepx = v.slide_stepx or 0
+        local slide_stepy = v.slide_stepy or 0
+        v.slidex = v.slidex + slide_stepx
+        v.slidey = v.slidey + slide_stepy
+        if slide_stepx < 0 and v.slidex < 0 then
+          v.slidex = v.w
+        end
+        if slide_stepx > 0 and v.slidex > v.w then
+          v.slidex = 0
+        end
+        if slide_stepy < 0 and v.slidey < 0 then
+          v.slidey = v.h
+        end
+        if slide_stepy > 0 and v.slidey > v.h then
+          v.slidey = 0
+        end
+	  end
       if anim_step == 1 then
         if frame < frames - 1 + first_frame then
           frame = frame + 1
@@ -223,7 +242,7 @@ function img:render(v)
 	    v.__delay = instead.ticks()
     end
   end
--- end of atlas N x M anim sprite
+-- end of atlas N x 1 anim sprite
     if v.background then
 	v.sprite:copy(sprite.scr(), 0, 0)
 	return
@@ -903,8 +922,9 @@ function decor:process()
     local t = instead.ticks()
     for _, v in pairs(self.objects) do
 	if not v.hidden and type(v.process) == 'function' then
-	    decor.dirty = true
+--	    decor.dirty = true
 	    if t - (v.__last_time or 0) > (v.speed or 25) then
+			decor.dirty = true
 		    v:process()
 		    v.__last_time = t
 	    end
